@@ -6,18 +6,16 @@ class GASort:
         self.array = np.array(array)
         self.verbose = verbose
         self.ascending = ascending
+        if chromosomes & 1:
+            chromosomes += 1
         self.chromosomes = chromosomes
 
     def fitness(self, indices):
         score = 0
         for i in range(1, len(indices)):
             diff = self.array[indices[i]] - self.array[indices[i - 1]]
-            if self.ascending:
-                if diff < 0 :
-                    score += 1
-            else:
-                if diff > 0:
-                    score += 1
+            if diff < 0:
+                score += abs(diff)
         return score
 
     def generate_chromosomes(self, size=4):
@@ -69,15 +67,10 @@ class GASort:
         return c
 
     def mutate(self, p):
-        #j = np.random.randint(0, len(p), 2)
-        #p[j[0]], p[j[1]] = p[j[1]], p[j[0]]
-        
-        mid = int(len(p) / 2)
-        f1 = np.array(p[0:mid])
-        f2 = np.array(p[mid:])
-
-        p[0:mid] = f2
-        p[mid:] = f1
+        j = np.random.randint(0, len(p), 2)
+        p[j[0]], p[j[1]] = p[j[1]], p[j[0]]
+        j = np.random.randint(0, len(p), 2)
+        p[j[0]], p[j[1]] = p[j[1]], p[j[0]]
         return p
 
     def mutate_all(self, c):
@@ -98,7 +91,7 @@ class GASort:
         now = 0
 
         chs = self.generate_chromosomes(self.chromosomes)
-        while best_score != 0:
+        while not end:
             score = np.array([int(self.fitness(i)) for i in chs])
             #print("Score: ", score)
             arr = sorted(range(len(score)), key=lambda x:score[x], reverse=False)
@@ -108,7 +101,7 @@ class GASort:
 
             if score[0] < best_score:
                 best_score = score[0]
-                elite = chs[0]
+                elite = np.array(chs[0, :])
 
             chs = self.selection(chs, split)
             chs[splitted_num_of_chromosomes:,:] = self.generate_chromosomes( splitted_num_of_chromosomes)
@@ -118,7 +111,11 @@ class GASort:
 
             if now < epoch - 1:
                     print(now, best_score, end='\r\n', flush=True)
+                    sys.stdout.flush()
             else:
                     print(now, best_score)
             now += 1
+
+            if best_score == 0:
+                end = True
         return elite
