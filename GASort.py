@@ -2,13 +2,18 @@ import numpy as np
 import sys
 
 class GASort:
-    def __init__(self, array, verbose=False, ascending=True, chromosomes=4):
+    def __init__(self, array, verbose=False, ascending=True, chromosomes=4, mutation_rate=0.5, crossover_rate=0.5):
         self.array = np.array(array)
         self.verbose = verbose
         self.ascending = ascending
         if chromosomes & 1:
             chromosomes += 1
         self.chromosomes = chromosomes
+        self.mutation_rate = mutation_rate
+        self.crossover_rate = crossover_rate
+
+    def in_ratio(self, rate):
+        return np.random.random() < rate
 
     def fitness(self, indices):
         score = 0
@@ -32,27 +37,29 @@ class GASort:
         child = np.full((len(p1)), -1)
         head = p1[j]
 
-        run = True
+        if self.in_ratio(self.crossover_rate):
+            run = True
+            while run:
+                # Copy from p1
+                child[j] = p1[j]
 
-        while run:
-            # Copy from p1
-            child[j] = p1[j]
+                # Look j at p2
+                jp2 = p2[j]
 
-            # Look j at p2
-            jp2 = p2[j]
+                if jp2 == head:
+                    run = False
+                else:
+                    # Find the location of the value jp2 from p1 excluding
+                    # the last point so that no repitition will occur
+                    j = np.where(p1 == jp2)[0][0]
 
-            if jp2 == head:
-                run = False
-            else:
-                # Find the location of the value jp2 from p1 excluding
-                # the last point so that no repitition will occur
-                j = np.where(p1 == jp2)[0][0]
+            for i in range(len(child)):
+                if child[i] == -1:
+                    child[i] = p2[i]
 
-        for i in range(len(child)):
-            if child[i] == -1:
-                child[i] = p2[i]
-
-        return child
+            return child
+        else:
+            return c1
 
     def crossover(self, c1, c2):
         child1 = self._crossover(c1, c2)
@@ -67,10 +74,11 @@ class GASort:
         return c
 
     def mutate(self, p):
-        j = np.random.randint(0, len(p), 2)
-        p[j[0]], p[j[1]] = p[j[1]], p[j[0]]
-        j = np.random.randint(0, len(p), 2)
-        p[j[0]], p[j[1]] = p[j[1]], p[j[0]]
+        if self.in_ratio(self.mutation_rate):
+            j = np.random.randint(0, len(p), 2)
+            p[j[0]], p[j[1]] = p[j[1]], p[j[0]]
+            j = np.random.randint(0, len(p), 2)
+            p[j[0]], p[j[1]] = p[j[1]], p[j[0]]
         return p
 
     def mutate_all(self, c):
