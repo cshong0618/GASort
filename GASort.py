@@ -92,7 +92,7 @@ class GASort:
 
         chs = self.generate_chromosomes(self.chromosomes)
         while not end:
-            score = np.array([int(self.fitness(i)) for i in chs])
+            score = np.array([self.fitness(i) for i in chs])
             #print("Score: ", score)
             arr = sorted(range(len(score)), key=lambda x:score[x], reverse=False)
             #print("arridx: ", arr)
@@ -102,6 +102,9 @@ class GASort:
             if score[0] < best_score:
                 best_score = score[0]
                 elite = np.array(chs[0, :])
+
+            if best_score == 0:
+                break
 
             chs = self.selection(chs, split)
             chs[splitted_num_of_chromosomes:,:] = self.generate_chromosomes( splitted_num_of_chromosomes)
@@ -116,6 +119,5 @@ class GASort:
                     print(now, best_score)
             now += 1
 
-            if best_score == 0:
-                end = True
+
         return elite
